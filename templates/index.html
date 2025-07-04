@@ -1,10 +1,15 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+    <!-- Configuración básica del documento HTML -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Compartir Videos - Mi Portfolio</title>
+    
+    <!-- Enlace a los estilos CSS personalizados -->
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    
+    <!-- Enlace a Font Awesome para iconos -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
 <body>
@@ -114,49 +119,97 @@
         </div>
     </div>
 
+    <!-- JavaScript para funcionalidades interactivas de la aplicación -->
     <script>
-        // Función para copiar enlace de compartir
+        // ===================================================================
+        // FUNCIONES PARA COMPARTIR VIDEOS
+        // ===================================================================
+        
+        /**
+         * Muestra el modal de compartir con el enlace del video
+         * @param {string} videoId - ID único del video a compartir
+         */
         function copyShareLink(videoId) {
+            // Construir URL completa del video usando el origen actual
             const shareUrl = window.location.origin + '/video/' + videoId;
+            
+            // Colocar la URL en el campo de texto del modal
             document.getElementById('shareLink').value = shareUrl;
+            
+            // Mostrar el modal de compartir
             document.getElementById('shareModal').style.display = 'block';
         }
 
-        // Función para copiar al portapapeles
+        /**
+         * Copia el enlace del video al portapapeles del usuario
+         */
         function copyToClipboard() {
+            // Obtener referencia al campo de texto con el enlace
             const shareLink = document.getElementById('shareLink');
+            
+            // Seleccionar todo el texto del campo
             shareLink.select();
-            shareLink.setSelectionRange(0, 99999);
+            shareLink.setSelectionRange(0, 99999); // Para dispositivos móviles
+            
+            // Copiar el texto seleccionado al portapapeles
             document.execCommand('copy');
             
-            // Cambiar texto del botón temporalmente
+            // Proporcionar feedback visual al usuario
             const copyBtn = document.querySelector('.btn-copy');
             const originalText = copyBtn.innerHTML;
+            
+            // Cambiar temporalmente el texto del botón para confirmar la acción
             copyBtn.innerHTML = '<i class="fas fa-check"></i> ¡Copiado!';
+            
+            // Restaurar el texto original después de 2 segundos
             setTimeout(() => {
                 copyBtn.innerHTML = originalText;
             }, 2000);
         }
 
-        // Cerrar modal
+        // ===================================================================
+        // CONTROL DEL MODAL DE COMPARTIR
+        // ===================================================================
+        
+        /**
+         * Cerrar modal al hacer clic en el botón X
+         */
         document.querySelector('.close').onclick = function() {
             document.getElementById('shareModal').style.display = 'none';
         }
 
+        /**
+         * Cerrar modal al hacer clic fuera del contenido del modal
+         */
         window.onclick = function(event) {
             const modal = document.getElementById('shareModal');
+            // Si el clic fue en el fondo del modal (no en el contenido)
             if (event.target == modal) {
                 modal.style.display = 'none';
             }
         }
 
-        // Validación de archivo
+        // ===================================================================
+        // VALIDACIÓN DE ARCHIVOS DE VIDEO
+        // ===================================================================
+        
+        /**
+         * Valida el tamaño del archivo seleccionado antes de subirlo
+         */
         document.getElementById('video').addEventListener('change', function(e) {
+            // Obtener el primer archivo seleccionado
             const file = e.target.files[0];
+            
             if (file) {
-                const maxSize = 100 * 1024 * 1024; // 100MB
+                // Definir tamaño máximo permitido (100MB en bytes)
+                const maxSize = 100 * 1024 * 1024; // 100MB = 104,857,600 bytes
+                
+                // Verificar si el archivo excede el tamaño máximo
                 if (file.size > maxSize) {
+                    // Mostrar mensaje de error al usuario
                     alert('El archivo es demasiado grande. El tamaño máximo es 100MB.');
+                    
+                    // Limpiar la selección de archivo
                     e.target.value = '';
                 }
             }

@@ -1,10 +1,15 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+    <!-- Configuración básica del documento HTML -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ video.title }} - Compartir Videos</title>
+    
+    <!-- Enlace a los estilos CSS personalizados -->
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    
+    <!-- Enlace a Font Awesome para iconos -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
 <body>
@@ -130,51 +135,91 @@
         </div>
     </div>
 
+    <!-- JavaScript para las funcionalidades de la página de video -->
     <script>
-        // Función para copiar enlace de compartir
+        // ===================================================================
+        // FUNCIONES PARA COMPARTIR VIDEO
+        // ===================================================================
+        
+        /**
+         * Muestra el modal de compartir con el enlace del video actual
+         * Obtiene la URL actual y la muestra en el modal
+         */
         function copyShareLink() {
+            // Obtener la URL completa de la página actual
             const shareUrl = window.location.href;
+            // Colocar la URL en el campo de texto del modal
             document.getElementById('shareLink').value = shareUrl;
+            // Mostrar el modal
             document.getElementById('shareModal').style.display = 'block';
         }
 
-        // Función para copiar al portapapeles
+        /**
+         * Copia el enlace del video al portapapeles del usuario
+         * y proporciona feedback visual
+         */
         function copyToClipboard() {
+            // Obtener el campo de texto con el enlace
             const shareLink = document.getElementById('shareLink');
+            // Seleccionar todo el texto
             shareLink.select();
-            shareLink.setSelectionRange(0, 99999);
+            shareLink.setSelectionRange(0, 99999); // Para compatibilidad móvil
+            
+            // Copiar al portapapeles
             document.execCommand('copy');
             
-            // Cambiar texto del botón temporalmente
+            // Proporcionar feedback visual al usuario
             const copyBtn = document.querySelector('.btn-copy');
             const originalText = copyBtn.innerHTML;
+            // Cambiar el texto del botón temporalmente
             copyBtn.innerHTML = '<i class="fas fa-check"></i> ¡Copiado!';
+            // Restaurar el texto original después de 2 segundos
             setTimeout(() => {
                 copyBtn.innerHTML = originalText;
             }, 2000);
         }
 
-        // Cerrar modal
+        // ===================================================================
+        // CONTROL DEL MODAL
+        // ===================================================================
+        
+        /**
+         * Cerrar el modal al hacer clic en el botón X
+         */
         document.querySelector('.close').onclick = function() {
             document.getElementById('shareModal').style.display = 'none';
         }
 
+        /**
+         * Cerrar el modal al hacer clic fuera de su contenido
+         */
         window.onclick = function(event) {
             const modal = document.getElementById('shareModal');
+            // Si el clic fue en el fondo oscuro (no en el contenido)
             if (event.target == modal) {
                 modal.style.display = 'none';
             }
         }
 
-        // Controles adicionales para el video
+        // ===================================================================
+        // CONTROL DEL REPRODUCTOR DE VIDEO
+        // ===================================================================
+        
+        // Obtener referencia al elemento de video
         const video = document.querySelector('.video-player');
         
-        // Mostrar controles personalizados si es necesario
+        /**
+         * Se ejecuta cuando los metadatos del video están cargados
+         * Útil para saber la duración y dimensiones del video
+         */
         video.addEventListener('loadedmetadata', function() {
             console.log('Video cargado:', video.duration, 'segundos');
         });
 
-        // Manejar errores de carga
+        /**
+         * Maneja los errores que puedan ocurrir durante la carga del video
+         * Muestra un mensaje de error al usuario
+         */
         video.addEventListener('error', function(e) {
             console.error('Error al cargar el video:', e);
             alert('Error al cargar el video. Por favor, intenta de nuevo.');
