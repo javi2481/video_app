@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ video.title }} - Compartir Videos</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <a href="{{ url_for('index') }}" class="back-link">
+                <i class="fas fa-arrow-left"></i> Volver a la lista
+            </a>
+            <h1><i class="fas fa-video"></i> {{ video.title }}</h1>
+        </header>
+
+        <!-- Mensajes Flash -->
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <div class="messages">
+                    {% for message in messages %}
+                        <div class="alert">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <!-- Reproductor de Video -->
+        <section class="video-player-section">
+            <div class="video-container">
+                <video controls preload="metadata" class="video-player">
+                    <source src="{{ url_for('stream_video', video_id=video.id) }}" type="video/{{ video.filename.split('.')[-1] }}">
+                    Tu navegador no soporta la reproducción de video HTML5.
+                </video>
+            </div>
+        </section>
+
+        <!-- Información del Video -->
+        <section class="video-details">
+            <div class="video-info-card">
+                <h2><i class="fas fa-info-circle"></i> Información del Video</h2>
+                
+                <div class="info-grid">
+                    <div class="info-item">
+                        <i class="fas fa-heading"></i>
+                        <strong>Título:</strong>
+                        <span>{{ video.title }}</span>
+                    </div>
+                    
+                    <div class="info-item">
+                        <i class="fas fa-calendar"></i>
+                        <strong>Fecha de subida:</strong>
+                        <span>{{ video.upload_date[:19].replace('T', ' ') }}</span>
+                    </div>
+                    
+                    <div class="info-item">
+                        <i class="fas fa-file"></i>
+                        <strong>Tamaño:</strong>
+                        <span>{{ video.file_size | filesize }}</span>
+                    </div>
+                    
+                    <div class="info-item">
+                        <i class="fas fa-file-video"></i>
+                        <strong>Archivo original:</strong>
+                        <span>{{ video.original_filename }}</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Acciones del Video -->
+        <section class="video-actions-section">
+            <div class="actions-card">
+                <h3><i class="fas fa-tools"></i> Acciones</h3>
+                
+                <div class="action-buttons">
+                    <button onclick="copyShareLink()" class="btn btn-share">
+                        <i class="fas fa-share"></i> Compartir Video
+                    </button>
+                    
+                    <a href="{{ url_for('stream_video', video_id=video.id) }}" 
+                       download="{{ video.original_filename }}" 
+                       class="btn btn-download">
+                        <i class="fas fa-download"></i> Descargar
+                    </a>
+                    
+                    <form method="post" action="{{ url_for('delete_video', video_id=video.id) }}" 
+                          style="display: inline;" 
+                          onsubmit="return confirm('¿Estás seguro de que quieres eliminar este video? Esta acción no se puede deshacer.')">
+                        <button type="submit" class="btn btn-delete">
+                            <i class="fas fa-trash"></i> Eliminar Video
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+        <!-- Instrucciones para Compartir -->
+        <section class="share-instructions">
+            <div class="instructions-card">
+                <h3><i class="fas fa-question-circle"></i> ¿Cómo compartir?</h3>
+                <ol>
+                    <li>Haz clic en el botón "Compartir Video"</li>
+                    <li>Copia el enlace que aparece</li>
+                    <li>Envía el enlace a quien quieras que vea el video</li>
+                    <li>Cualquier persona con el enlace podrá ver el video</li>
+                </ol>
+            </div>
+        </section>
+    </div>
+
+    <!-- Modal para enlace de compartir -->
+    <div id="shareModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h3><i class="fas fa-share"></i> Compartir Video</h3>
+            <p>Copia este enlace para compartir el video:</p>
+            <div class="share-link-container">
+                <input type="text" id="shareLink" readonly>
+                <button onclick="copyToClipboard()" class="btn btn-copy">
+                    <i class="fas fa-copy"></i> Copiar
+                </button>
+            </div>
+            <p class="share-note">
+                <i class="fas fa-info-circle"></i>
+                Cualquier persona con este enlace podrá ver el video.
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // Función para copiar enlace de compartir
+        function copyShareLink() {
+            const shareUrl = window.location.href;
+            document.getElementById('shareLink').value = shareUrl;
+            document.getElementById('shareModal').style.display = 'block';
+        }
+
+        // Función para copiar al portapapeles
+        function copyToClipboard() {
+            const shareLink = document.getElementById('shareLink');
+            shareLink.select();
+            shareLink.setSelectionRange(0, 99999);
+            document.execCommand('copy');
+            
+            // Cambiar texto del botón temporalmente
+            const copyBtn = document.querySelector('.btn-copy');
+            const originalText = copyBtn.innerHTML;
+            copyBtn.innerHTML = '<i class="fas fa-check"></i> ¡Copiado!';
+            setTimeout(() => {
+                copyBtn.innerHTML = originalText;
+            }, 2000);
+        }
+
+        // Cerrar modal
+        document.querySelector('.close').onclick = function() {
+            document.getElementById('shareModal').style.display = 'none';
+        }
+
+        window.onclick = function(event) {
+            const modal = document.getElementById('shareModal');
+            if (event.target == modal) {
+                modal.style.display = 'none';
+            }
+        }
+
+        // Controles adicionales para el video
+        const video = document.querySelector('.video-player');
+        
+        // Mostrar controles personalizados si es necesario
+        video.addEventListener('loadedmetadata', function() {
+            console.log('Video cargado:', video.duration, 'segundos');
+        });
+
+        // Manejar errores de carga
+        video.addEventListener('error', function(e) {
+            console.error('Error al cargar el video:', e);
+            alert('Error al cargar el video. Por favor, intenta de nuevo.');
+        });
+    </script>
+</body>
+</html>

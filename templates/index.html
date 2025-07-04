@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compartir Videos - Mi Portfolio</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-video"></i> Compartir Videos</h1>
+            <p>Sube y comparte tus videos fácilmente</p>
+        </header>
+
+        <!-- Mensajes Flash -->
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <div class="messages">
+                    {% for message in messages %}
+                        <div class="alert">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <!-- Formulario de Upload -->
+        <section class="upload-section">
+            <h2><i class="fas fa-upload"></i> Subir Nuevo Video</h2>
+            <form action="{{ url_for('upload_video') }}" method="post" enctype="multipart/form-data" class="upload-form">
+                <div class="form-group">
+                    <label for="title">Título del Video:</label>
+                    <input type="text" id="title" name="title" required placeholder="Ingresa un título descriptivo">
+                </div>
+                
+                <div class="form-group">
+                    <label for="video">Seleccionar Video:</label>
+                    <input type="file" id="video" name="video" accept=".mp4,.avi,.mov,.mkv,.webm" required>
+                    <small>Formatos permitidos: MP4, AVI, MOV, MKV, WEBM (máximo 100MB)</small>
+                </div>
+                
+                <button type="submit" class="btn-upload">
+                    <i class="fas fa-cloud-upload-alt"></i> Subir Video
+                </button>
+            </form>
+        </section>
+
+        <!-- Lista de Videos -->
+        <section class="videos-section">
+            <h2><i class="fas fa-film"></i> Videos Subidos</h2>
+            
+            {% if videos %}
+                <div class="videos-grid">
+                    {% for video_id, video in videos.items() %}
+                        <div class="video-card">
+                            <div class="video-info">
+                                <h3>{{ video.title }}</h3>
+                                <p class="video-meta">
+                                    <i class="fas fa-calendar"></i> 
+                                    {{ video.upload_date[:10] }}
+                                </p>
+                                <p class="video-meta">
+                                    <i class="fas fa-file"></i> 
+                                    {{ video.file_size | filesize }}
+                                </p>
+                                <p class="video-meta">
+                                    <i class="fas fa-file-video"></i> 
+                                    {{ video.original_filename }}
+                                </p>
+                            </div>
+                            
+                            <div class="video-actions">
+                                <a href="{{ url_for('view_video', video_id=video.id) }}" class="btn btn-view">
+                                    <i class="fas fa-play"></i> Ver Video
+                                </a>
+                                
+                                <button onclick="copyShareLink('{{ video.id }}')" class="btn btn-share">
+                                    <i class="fas fa-share"></i> Compartir
+                                </button>
+                                
+                                <form method="post" action="{{ url_for('delete_video', video_id=video.id) }}" 
+                                      style="display: inline;" 
+                                      onsubmit="return confirm('¿Estás seguro de que quieres eliminar este video?')">
+                                    <button type="submit" class="btn btn-delete">
+                                        <i class="fas fa-trash"></i> Eliminar
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="no-videos">
+                    <i class="fas fa-video-slash"></i>
+                    <p>No hay videos subidos aún. ¡Sube tu primer video!</p>
+                </div>
+            {% endif %}
+        </section>
+    </div>
+
+    <!-- Modal para enlace de compartir -->
+    <div id="shareModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h3><i class="fas fa-share"></i> Compartir Video</h3>
+            <p>Copia este enlace para compartir el video:</p>
+            <div class="share-link-container">
+                <input type="text" id="shareLink" readonly>
+                <button onclick="copyToClipboard()" class="btn btn-copy">
+                    <i class="fas fa-copy"></i> Copiar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Función para copiar enlace de compartir
+        function copyShareLink(videoId) {
+            const shareUrl = window.location.origin + '/video/' + videoId;
+            document.getElementById('shareLink').value = shareUrl;
+            document.getElementById('shareModal').style.display = 'block';
+        }
+
+        // Función para copiar al portapapeles
+        function copyToClipboard() {
+            const shareLink = document.getElementById('shareLink');
+            shareLink.select();
+            shareLink.setSelectionRange(0, 99999);
+            document.execCommand('copy');
+            
+            // Cambiar texto del botón temporalmente
+            const copyBtn = document.querySelector('.btn-copy');
+            const originalText = copyBtn.innerHTML;
+            copyBtn.innerHTML = '<i class="fas fa-check"></i> ¡Copiado!';
+            setTimeout(() => {
+                copyBtn.innerHTML = originalText;
+            }, 2000);
+        }
+
+        // Cerrar modal
+        document.querySelector('.close').onclick = function() {
+            document.getElementById('shareModal').style.display = 'none';
+        }
+
+        window.onclick = function(event) {
+            const modal = document.getElementById('shareModal');
+            if (event.target == modal) {
+                modal.style.display = 'none';
+            }
+        }
+
+        // Validación de archivo
+        document.getElementById('video').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const maxSize = 100 * 1024 * 1024; // 100MB
+                if (file.size > maxSize) {
+                    alert('El archivo es demasiado grande. El tamaño máximo es 100MB.');
+                    e.target.value = '';
+                }
+            }
+        });
+    </script>
+</body>
+</html>
